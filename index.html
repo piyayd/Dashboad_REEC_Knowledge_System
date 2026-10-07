@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบสารสนเทศองค์ความรู้ด้านพลังงานทดแทนและอนุรักษ์พลังงาน - Web Dashboard</title>
+
+<!-- Fonts: Inter & IBM Plex Sans Thai -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- jsVectorMap CSS for Metabase-style Region Map -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" />
+
+<style>
+  :root {
+    --bg: #F5F6F8;
+    --surface: #FFFFFF;
+    --surface-alt: #FAFBFC;
+    --header-bg: #FFFFFF;
+    --border: #E5E8EC;
+    --border-strong: #D8DCE1;
+    --text-primary: #1A1F25;
+    --text-secondary: #5C6773;
+    --text-muted: #96A0AA;
+    --accent: #1FA8C9;
+    --accent-soft: #E6F5F9;
+    --accent-dark: #127993;
+    --up: #2FA36B;
+    --up-soft: #EAF7F0;
+    --amber: #EAA82C;
+    --amber-soft: #FEF8EC;
+    --down: #E1613A;
+    --shadow-card: 0 1px 2px rgba(26,31,37,0.04), 0 1px 6px rgba(26,31,37,0.06);
+
+    /* Metabase Region Map Palette (Cyan/Teal Theme) */
+    --region-empty: #ECEFF3;
+    --region-b1: #BCE7F0;  /* 1 - 10 */
+    --region-b2: #75C9DC;  /* 11 - 50 */
+    --region-b3: #2AA7C6;  /* 51 - 200 */
+    --region-b4: #157992;  /* 201 - 1,000 */
+    --region-b5: #0A4E5F;  /* 1,000+ */
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Inter', 'IBM Plex Sans Thai', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+  }
+
+  .app-header {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    margin: 0 -24px 20px;
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .app-header-inner { 
+    max-width: 1160px; 
+    margin: 0 auto; 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    flex-wrap: wrap; 
+    gap: 16px; 
+  }
+  
+  .app-title-row h1 { 
+    font-size: 17.5px; 
+    font-weight: 700; 
+    margin: 0; 
+    color: var(--text-primary); 
+    line-height: 1.3;
+  }
+
+  .inline-filter {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap; 
+    align-items: center;
+    gap: 10px;
+  }
+
+  .inline-filter .filter-label { 
+    font-weight: 600; 
+    font-size: 12px; 
+    color: var(--text-secondary);
+  }
+  
+  select {
+    appearance: none; 
+    -webkit-appearance: none;
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235C6773'/%3E%3C/svg%3E") no-repeat right 10px center;
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong); 
+    border-radius: 4px;
+    padding: 5px 28px 5px 10px; 
+    font-size: 12.5px; 
+    font-weight: 500;
+    font-family: 'Inter', 'IBM Plex Sans Thai', sans-serif;
+    outline: none; 
+    cursor: pointer;
+    min-width: 110px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  select:hover { border-color: var(--accent); }
+  select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: var(--shadow-card);
+    min-width: 0;
+  }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .kpi-card {
+    padding: 16px 18px 20px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .kpi-accent { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 3.5px; 
+  }
+
+  .kpi-head { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .kpi-label {
+    font-size: 11px; 
+    font-weight: 600; 
+    letter-spacing: 0.02em; 
+    color: var(--text-secondary);
+  }
+
+  .kpi-value {
+    font-family: 'Inter', 'IBM Plex Sans Thai', sans-serif;
+    font-size: 30px; 
+    font-weight: 800; 
+    color: var(--text-primary);
+    line-height: 1.15; 
+    margin-top: 8px;
+  }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+
+  @media (min-width: 992px) {
+    .chart-grid {
+      grid-template-columns: 1.25fr 1fr;
+    }
+  }
+
+  .chart-card { 
+    padding: 18px 20px; 
+    display: flex; 
+    flex-direction: column; 
+    min-width: 0; 
+    height: 460px;
+  }
+  
+  .chart-head-row {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start;
+    flex-wrap: wrap; 
+    gap: 10px; 
+    margin-bottom: 12px;
+  }
+
+  .chart-title { 
+    font-size: 14.5px; 
+    font-weight: 700; 
+    color: var(--text-primary); 
+    margin-bottom: 3px; 
+  }
+
+  .chart-subtitle {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  .badge-tag {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    display: inline-block;
+  }
+
+  .chart-wrap { 
+    position: relative; 
+    width: 100%; 
+    flex-grow: 1; 
+    min-height: 0;
+  }
+
+  /* Metabase Region Map Container */
+  .region-map-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    background: #FFFFFF;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  #jvm-map {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+
+  #jvm-map:active {
+    cursor: grabbing;
+  }
+
+  #jvm-map svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  /* Metabase Styled Legend Overlay */
+  .metabase-legend-box {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    z-index: 10;
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .metabase-legend-title {
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.2;
+  }
+
+  .legend-circle {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .map-footer-note {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Tooltip overrides for clean Metabase style */
+  .jvm-tooltip {
+    background-color: #1A1F25 !important;
+    border-radius: 5px !important;
+    padding: 7px 10px !important;
+    font-family: 'Inter', 'IBM Plex Sans Thai', sans-serif !important;
+    font-size: 11.5px !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    line-height: 1.4 !important;
+    z-index: 1000 !important;
+  }
+
+  /* ตารางรายชื่อประเทศ — แบบ table card ของ Metabase (pagination) */
+  .table-card { padding: 18px 0 0; display: flex; flex-direction: column; }
+  .table-card .chart-head-row { padding: 0 20px; margin-bottom: 8px; }
+  .mb-table-wrap { overflow: auto; max-height: 397px; }
+  .mb-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12.5px;
+    color: var(--text-primary);
+  }
+  .mb-table th {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    padding: 0 20px;
+    height: 36px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+  }
+  .mb-table td {
+    padding: 0 20px;
+    height: 36px;
+    border-bottom: 1px solid #F0F2F4;
+    white-space: nowrap;
+  }
+  .mb-table tbody tr:hover td { background: #F9FBFC; }
+  .mb-table .col-rank { width: 64px; }
+  .mb-table .col-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .mb-table td.col-num { font-weight: 700; }
+  .mb-table-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 20px 10px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 768px) {
+    .mb-table th, .mb-table td { padding: 0 12px; }
+    .mb-table .col-rank { width: 40px; }
+  }
+
+  @media (max-width: 768px) {
+    .app-header-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .inline-filter {
+      width: 100%;
+      justify-content: flex-start;
+    }
+    .chart-card {
+      height: 420px;
+    }
+    .metabase-legend-box {
+      bottom: 6px;
+      left: 6px;
+      padding: 6px 8px;
+      font-size: 10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-header-inner">
+    <div class="app-title-row">
+      <h1>ระบบสารสนเทศองค์ความรู้ด้านพลังงานทดแทนและอนุรักษ์พลังงาน</h1>
+    </div>
+    
+    <div class="inline-filter" style="box-shadow: var(--shadow-card);">
+      <span class="filter-label">ปี (พ.ศ.)</span>
+      <select id="yearSelect" title="เลือกปี"></select>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="card kpi-card">
+      <div class="kpi-accent" style="background: var(--accent);"></div>
+      <div class="kpi-head">
+        <span class="kpi-label">ผู้ใช้งานที่ใช้งานทั้งหมด</span>
+      </div>
+      <div class="kpi-value" id="kpiActiveUsers">-</div>
+    </div>
+
+    <div class="card kpi-card">
+      <div class="kpi-accent" style="background: #3B82F6;"></div>
+      <div class="kpi-head">
+        <span class="kpi-label">จำนวนประเทศที่เข้าใช้งาน</span>
+      </div>
+      <div class="kpi-value" id="kpiCountries">-</div>
+    </div>
+
+    <div class="card kpi-card">
+      <div class="kpi-accent" style="background: var(--up);"></div>
+      <div class="kpi-head">
+        <span class="kpi-label">ช่วงวันที่ของข้อมูล</span>
+      </div>
+      <div class="kpi-value" id="kpiPeriod" style="font-size: 22px;">-</div>
+    </div>
+
+  </div>
+
+  <!-- Visualizations Grid -->
+  <div class="chart-grid">
+    
+    <!-- Left: Metabase Region Map -->
+    <div class="card chart-card">
+      <div class="chart-head-row">
+        <div>
+          <div class="chart-title">แผนภูมิแสดงการกระจายตัวของผู้ใช้งานตามประเทศ</div>
+          <div class="chart-subtitle" id="mapYearSubtitle">Region map: การกระจายตัวตามภูมิภาคทั่วโลก</div>
+        </div>
+      </div>
+      
+      <div class="chart-wrap">
+        <div class="region-map-wrapper">
+          <div id="jvm-map"></div>
+
+          <!-- Metabase Style Legend Overlay -->
+          <div class="metabase-legend-box">
+            <div class="metabase-legend-title">ผู้ใช้งาน (คน)</div>
+            <div class="legend-item"><span class="legend-circle" style="background: var(--region-b1);"></span> 1 - 10</div>
+            <div class="legend-item"><span class="legend-circle" style="background: var(--region-b2);"></span> 11 - 50</div>
+            <div class="legend-item"><span class="legend-circle" style="background: var(--region-b3);"></span> 51 - 200</div>
+            <div class="legend-item"><span class="legend-circle" style="background: var(--region-b4);"></span> 201 - 1,000</div>
+            <div class="legend-item"><span class="legend-circle" style="background: var(--region-b5);"></span> 1,000 +</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="map-footer-note">
+        <span style="display:inline-flex; align-items:center; gap:5px;">
+          <span class="legend-circle" style="background: var(--region-empty); border: 1px solid #D8DCE1;"></span>
+          ไม่มีข้อมูล (0 คน)
+        </span>
+        <span id="notSetBadge">ไม่ระบุประเทศ (not set): 0 คน</span>
+      </div>
+    </div>
+
+    <!-- Right: Top 5 Bar Chart -->
+    <div class="card chart-card">
+      <div class="chart-head-row">
+        <div>
+          <div class="chart-title">5 อันดับประเทศที่มีผู้ใช้งานสูงสุด</div>
+          <div class="chart-subtitle" id="barYearSubtitle">เรียงลำดับจำนวนผู้ใช้งานที่ใช้งาน</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="topCountriesChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ตารางรายชื่อประเทศทั้งหมด (เต็มความกว้าง) -->
+  <div class="card table-card">
+    <div class="chart-head-row">
+      <div>
+        <div class="chart-title">รายชื่อประเทศและจำนวนผู้ใช้งานทั้งหมด</div>
+      </div>
+    </div>
+    <div class="mb-table-wrap">
+      <table class="mb-table">
+        <thead>
+          <tr>
+            <th class="col-rank">#</th>
+            <th>Country</th>
+            <th class="col-num">จำนวนผู้ใช้งาน (คน)</th>
+          </tr>
+        </thead>
+        <tbody id="countryTableBody"></tbody>
+      </table>
+    </div>
+    <div class="mb-table-footer" id="tableRowCount"></div>
+  </div>
+
+</div>
+
+<!-- Chart.js and jsVectorMap Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"></script>
+
+<script>
+  // ยอดผู้เข้าชมรวมของระบบในแต่ละปี (จากตารางด้านบนของไฟล์ Excel)
+  const SYSTEM_PAGEVIEWS = {
+    2566: 26783,
+    2567: 40432,
+    2568: 28884,
+    2569: 27434
+  };
+
+  // รหัส ISO Alpha-2 และชื่อภาษาไทยของแต่ละประเทศ
+  const COUNTRY_META = {
+    "Algeria": { iso: 'DZ', th: "แอลจีเรีย" },
+    "Armenia": { iso: 'AM', th: "อาร์เมเนีย" },
+    "Australia": { iso: 'AU', th: "ออสเตรเลีย" },
+    "Austria": { iso: 'AT', th: "ออสเตรีย" },
+    "Bahrain": { iso: 'BH', th: "บาห์เรน" },
+    "Bangladesh": { iso: 'BD', th: "บังกลาเทศ" },
+    "Belarus": { iso: 'BY', th: "เบลารุส" },
+    "Belgium": { iso: 'BE', th: "เบลเยียม" },
+    "Bhutan": { iso: 'BT', th: "ภูฏาน" },
+    "Brazil": { iso: 'BR', th: "บราซิล" },
+    "Brunei": { iso: 'BN', th: "บรูไน" },
+    "Bulgaria": { iso: 'BG', th: "บัลแกเรีย" },
+    "Burkina Faso": { iso: 'BF', th: "บูร์กินาฟาโซ" },
+    "Cambodia": { iso: 'KH', th: "กัมพูชา" },
+    "Canada": { iso: 'CA', th: "แคนาดา" },
+    "Chile": { iso: 'CL', th: "ชิลี" },
+    "China": { iso: 'CN', th: "จีน" },
+    "Colombia": { iso: 'CO', th: "โคลอมเบีย" },
+    "Czechia": { iso: 'CZ', th: "เช็กเกีย" },
+    "Côte d’Ivoire": { iso: 'CI', th: "โกตดิวัวร์" },
+    "Denmark": { iso: 'DK', th: "เดนมาร์ก" },
+    "Ethiopia": { iso: 'ET', th: "เอธิโอเปีย" },
+    "Fiji": { iso: 'FJ', th: "ฟิจิ" },
+    "Finland": { iso: 'FI', th: "ฟินแลนด์" },
+    "France": { iso: 'FR', th: "ฝรั่งเศส" },
+    "Georgia": { iso: 'GE', th: "จอร์เจีย" },
+    "Germany": { iso: 'DE', th: "เยอรมนี" },
+    "Ghana": { iso: 'GH', th: "กานา" },
+    "Greece": { iso: 'GR', th: "กรีซ" },
+    "Hong Kong": { iso: 'HK', th: "ฮ่องกง" },
+    "Hungary": { iso: 'HU', th: "ฮังการี" },
+    "India": { iso: 'IN', th: "อินเดีย" },
+    "Indonesia": { iso: 'ID', th: "อินโดนีเซีย" },
+    "Iran": { iso: 'IR', th: "อิหร่าน" },
+    "Iraq": { iso: 'IQ', th: "อิรัก" },
+    "Ireland": { iso: 'IE', th: "ไอร์แลนด์" },
+    "Israel": { iso: 'IL', th: "อิสราเอล" },
+    "Italy": { iso: 'IT', th: "อิตาลี" },
+    "Japan": { iso: 'JP', th: "ญี่ปุ่น" },
+    "Kazakhstan": { iso: 'KZ', th: "คาซัคสถาน" },
+    "Kenya": { iso: 'KE', th: "เคนยา" },
+    "Kuwait": { iso: 'KW', th: "คูเวต" },
+    "Kyrgyzstan": { iso: 'KG', th: "คีร์กีซสถาน" },
+    "Laos": { iso: 'LA', th: "ลาว" },
+    "Latvia": { iso: 'LV', th: "ลัตเวีย" },
+    "Libya": { iso: 'LY', th: "ลิเบีย" },
+    "Luxembourg": { iso: 'LU', th: "ลักเซมเบิร์ก" },
+    "Macao": { iso: 'MO', th: "มาเก๊า" },
+    "Malaysia": { iso: 'MY', th: "มาเลเซีย" },
+    "Maldives": { iso: 'MV', th: "มัลดีฟส์" },
+    "Mexico": { iso: 'MX', th: "เม็กซิโก" },
+    "Myanmar (Burma)": { iso: 'MM', th: "เมียนมา" },
+    "Netherlands": { iso: 'NL', th: "เนเธอร์แลนด์" },
+    "New Zealand": { iso: 'NZ', th: "นิวซีแลนด์" },
+    "Nigeria": { iso: 'NG', th: "ไนจีเรีย" },
+    "North Macedonia": { iso: 'MK', th: "มาซิโดเนียเหนือ" },
+    "Norway": { iso: 'NO', th: "นอร์เวย์" },
+    "Oman": { iso: 'OM', th: "โอมาน" },
+    "Pakistan": { iso: 'PK', th: "ปากีสถาน" },
+    "Paraguay": { iso: 'PY', th: "ปารากวัย" },
+    "Peru": { iso: 'PE', th: "เปรู" },
+    "Philippines": { iso: 'PH', th: "ฟิลิปปินส์" },
+    "Poland": { iso: 'PL', th: "โปแลนด์" },
+    "Portugal": { iso: 'PT', th: "โปรตุเกส" },
+    "Qatar": { iso: 'QA', th: "กาตาร์" },
+    "Romania": { iso: 'RO', th: "โรมาเนีย" },
+    "Russia": { iso: 'RU', th: "รัสเซีย" },
+    "Saudi Arabia": { iso: 'SA', th: "ซาอุดีอาระเบีย" },
+    "Singapore": { iso: 'SG', th: "สิงคโปร์" },
+    "Slovenia": { iso: 'SI', th: "สโลวีเนีย" },
+    "South Africa": { iso: 'ZA', th: "แอฟริกาใต้" },
+    "South Korea": { iso: 'KR', th: "เกาหลีใต้" },
+    "Spain": { iso: 'ES', th: "สเปน" },
+    "Sri Lanka": { iso: 'LK', th: "ศรีลังกา" },
+    "Sweden": { iso: 'SE', th: "สวีเดน" },
+    "Switzerland": { iso: 'CH', th: "สวิตเซอร์แลนด์" },
+    "Taiwan": { iso: 'TW', th: "ไต้หวัน" },
+    "Thailand": { iso: 'TH', th: "ไทย" },
+    "Togo": { iso: 'TG', th: "โตโก" },
+    "Tunisia": { iso: 'TN', th: "ตูนิเซีย" },
+    "Türkiye": { iso: 'TR', th: "ตุรกี" },
+    "Uganda": { iso: 'UG', th: "ยูกันดา" },
+    "Ukraine": { iso: 'UA', th: "ยูเครน" },
+    "United Arab Emirates": { iso: 'AE', th: "สหรัฐอาหรับเอมิเรตส์" },
+    "United Kingdom": { iso: 'GB', th: "สหราชอาณาจักร" },
+    "United States": { iso: 'US', th: "สหรัฐอเมริกา" },
+    "Uzbekistan": { iso: 'UZ', th: "อุซเบกิสถาน" },
+    "Vietnam": { iso: 'VN', th: "เวียดนาม" }
+  };
+
+  const ISO_TO_COUNTRY = {};
+  Object.keys(COUNTRY_META).forEach(k => {
+    ISO_TO_COUNTRY[COUNTRY_META[k].iso] = k;
+  });
+
+  // ข้อมูลสถิติรายประเทศจากแผ่นงาน Excel ครบถ้วนทุกปี
+  const YEARLY_COUNTRY_DATA = {
+    2566: [
+      { country: "Thailand", active: 24612 },
+      { country: "United States", active: 817 },
+      { country: "Singapore", active: 291 },
+      { country: "Ireland", active: 239 },
+      { country: "Japan", active: 164 },
+      { country: "Sweden", active: 144 },
+      { country: "India", active: 102 },
+      { country: "South Korea", active: 61 },
+      { country: "China", active: 50 },
+      { country: "Laos", active: 36 },
+      { country: "Taiwan", active: 33 },
+      { country: "United Kingdom", active: 31 },
+      { country: "Malaysia", active: 24 },
+      { country: "Hong Kong", active: 23 },
+      { country: "Vietnam", active: 18 },
+      { country: "(not set)", active: 16 },
+      { country: "Netherlands", active: 15 },
+      { country: "Germany", active: 14 },
+      { country: "Cambodia", active: 12 },
+      { country: "Australia", active: 10 },
+      { country: "France", active: 9 },
+      { country: "Finland", active: 7 },
+      { country: "Philippines", active: 7 },
+      { country: "Bhutan", active: 6 },
+      { country: "Indonesia", active: 6 },
+      { country: "Belgium", active: 4 },
+      { country: "Myanmar (Burma)", active: 4 },
+      { country: "Switzerland", active: 4 },
+      { country: "Austria", active: 3 },
+      { country: "Canada", active: 3 },
+      { country: "Spain", active: 3 },
+      { country: "Denmark", active: 2 },
+      { country: "Bulgaria", active: 1 },
+      { country: "Ghana", active: 1 },
+      { country: "Greece", active: 1 },
+      { country: "Hungary", active: 1 },
+      { country: "Israel", active: 1 },
+      { country: "Italy", active: 1 },
+      { country: "Luxembourg", active: 1 },
+      { country: "New Zealand", active: 1 },
+      { country: "Nigeria", active: 1 },
+      { country: "Russia", active: 1 },
+      { country: "South Africa", active: 1 },
+      { country: "Togo", active: 1 },
+      { country: "Tunisia", active: 1 }
+    ],
+    2567: [
+      { country: "Thailand", active: 38414 },
+      { country: "Singapore", active: 638 },
+      { country: "United States", active: 313 },
+      { country: "Japan", active: 170 },
+      { country: "India", active: 120 },
+      { country: "Laos", active: 90 },
+      { country: "China", active: 78 },
+      { country: "South Korea", active: 78 },
+      { country: "Taiwan", active: 55 },
+      { country: "Hong Kong", active: 48 },
+      { country: "Ireland", active: 48 },
+      { country: "Sweden", active: 47 },
+      { country: "Germany", active: 37 },
+      { country: "Malaysia", active: 31 },
+      { country: "Australia", active: 24 },
+      { country: "France", active: 24 },
+      { country: "Netherlands", active: 24 },
+      { country: "Cambodia", active: 23 },
+      { country: "Vietnam", active: 21 },
+      { country: "United Kingdom", active: 16 },
+      { country: "Indonesia", active: 14 },
+      { country: "Philippines", active: 14 },
+      { country: "Canada", active: 13 },
+      { country: "Finland", active: 11 },
+      { country: "Russia", active: 7 },
+      { country: "Myanmar (Burma)", active: 6 },
+      { country: "Switzerland", active: 6 },
+      { country: "(not set)", active: 5 },
+      { country: "Austria", active: 5 },
+      { country: "Poland", active: 5 },
+      { country: "Denmark", active: 4 },
+      { country: "Hungary", active: 4 },
+      { country: "Belgium", active: 3 },
+      { country: "Portugal", active: 3 },
+      { country: "Saudi Arabia", active: 3 },
+      { country: "United Arab Emirates", active: 3 },
+      { country: "Bangladesh", active: 2 },
+      { country: "Italy", active: 2 },
+      { country: "Mexico", active: 2 },
+      { country: "Nigeria", active: 2 },
+      { country: "Norway", active: 2 },
+      { country: "Spain", active: 2 },
+      { country: "Belarus", active: 1 },
+      { country: "Bhutan", active: 1 },
+      { country: "Ethiopia", active: 1 },
+      { country: "Iran", active: 1 },
+      { country: "Kuwait", active: 1 },
+      { country: "Kyrgyzstan", active: 1 },
+      { country: "Latvia", active: 1 },
+      { country: "Maldives", active: 1 },
+      { country: "New Zealand", active: 1 },
+      { country: "North Macedonia", active: 1 },
+      { country: "Paraguay", active: 1 },
+      { country: "Slovenia", active: 1 },
+      { country: "Türkiye", active: 1 },
+      { country: "Uganda", active: 1 },
+      { country: "Ukraine", active: 1 }
+    ],
+    2568: [
+      { country: "Thailand", active: 26464 },
+      { country: "Singapore", active: 766 },
+      { country: "China", active: 494 },
+      { country: "United States", active: 405 },
+      { country: "Japan", active: 117 },
+      { country: "Ireland", active: 70 },
+      { country: "Sweden", active: 54 },
+      { country: "India", active: 53 },
+      { country: "Hong Kong", active: 38 },
+      { country: "Laos", active: 36 },
+      { country: "United Kingdom", active: 32 },
+      { country: "Malaysia", active: 31 },
+      { country: "Taiwan", active: 26 },
+      { country: "France", active: 24 },
+      { country: "Germany", active: 23 },
+      { country: "Vietnam", active: 23 },
+      { country: "Indonesia", active: 22 },
+      { country: "Australia", active: 20 },
+      { country: "Cambodia", active: 15 },
+      { country: "Spain", active: 15 },
+      { country: "Switzerland", active: 14 },
+      { country: "Türkiye", active: 13 },
+      { country: "Netherlands", active: 10 },
+      { country: "Poland", active: 10 },
+      { country: "South Korea", active: 10 },
+      { country: "United Arab Emirates", active: 8 },
+      { country: "Canada", active: 7 },
+      { country: "Myanmar (Burma)", active: 7 },
+      { country: "Colombia", active: 6 },
+      { country: "Philippines", active: 6 },
+      { country: "Romania", active: 6 },
+      { country: "Brazil", active: 5 },
+      { country: "Bahrain", active: 4 },
+      { country: "Finland", active: 4 },
+      { country: "Italy", active: 4 },
+      { country: "Saudi Arabia", active: 4 },
+      { country: "(not set)", active: 3 },
+      { country: "Belgium", active: 3 },
+      { country: "Chile", active: 3 },
+      { country: "Nigeria", active: 3 },
+      { country: "Iraq", active: 2 },
+      { country: "Kenya", active: 2 },
+      { country: "New Zealand", active: 2 },
+      { country: "Norway", active: 2 },
+      { country: "Peru", active: 2 },
+      { country: "Sri Lanka", active: 2 },
+      { country: "Austria", active: 1 },
+      { country: "Bangladesh", active: 1 },
+      { country: "Bhutan", active: 1 },
+      { country: "Czechia", active: 1 },
+      { country: "Côte d’Ivoire", active: 1 },
+      { country: "Georgia", active: 1 },
+      { country: "Hungary", active: 1 },
+      { country: "Kazakhstan", active: 1 },
+      { country: "Latvia", active: 1 },
+      { country: "Macao", active: 1 },
+      { country: "Oman", active: 1 },
+      { country: "Pakistan", active: 1 },
+      { country: "Slovenia", active: 1 },
+      { country: "Tunisia", active: 1 }
+    ],
+    2569: [
+      { country: "Thailand", active: 23889 },
+      { country: "United States", active: 827 },
+      { country: "Singapore", active: 820 },
+      { country: "(not set)", active: 604 },
+      { country: "China", active: 481 },
+      { country: "Sweden", active: 117 },
+      { country: "Ireland", active: 102 },
+      { country: "India", active: 101 },
+      { country: "Japan", active: 90 },
+      { country: "Hong Kong", active: 82 },
+      { country: "Laos", active: 47 },
+      { country: "Malaysia", active: 37 },
+      { country: "Australia", active: 26 },
+      { country: "United Kingdom", active: 22 },
+      { country: "Netherlands", active: 16 },
+      { country: "South Korea", active: 15 },
+      { country: "Vietnam", active: 14 },
+      { country: "Germany", active: 12 },
+      { country: "Taiwan", active: 12 },
+      { country: "Poland", active: 11 },
+      { country: "Indonesia", active: 9 },
+      { country: "Russia", active: 8 },
+      { country: "Canada", active: 7 },
+      { country: "France", active: 7 },
+      { country: "Myanmar (Burma)", active: 7 },
+      { country: "Philippines", active: 7 },
+      { country: "Brazil", active: 5 },
+      { country: "Cambodia", active: 4 },
+      { country: "Israel", active: 4 },
+      { country: "Libya", active: 4 },
+      { country: "Norway", active: 4 },
+      { country: "Pakistan", active: 4 },
+      { country: "Austria", active: 3 },
+      { country: "New Zealand", active: 3 },
+      { country: "Bahrain", active: 2 },
+      { country: "Bangladesh", active: 2 },
+      { country: "Belgium", active: 2 },
+      { country: "Brunei", active: 2 },
+      { country: "Finland", active: 2 },
+      { country: "Iraq", active: 2 },
+      { country: "Switzerland", active: 2 },
+      { country: "United Arab Emirates", active: 2 },
+      { country: "Algeria", active: 1 },
+      { country: "Armenia", active: 1 },
+      { country: "Burkina Faso", active: 1 },
+      { country: "Chile", active: 1 },
+      { country: "Colombia", active: 1 },
+      { country: "Denmark", active: 1 },
+      { country: "Fiji", active: 1 },
+      { country: "Kazakhstan", active: 1 },
+      { country: "Kenya", active: 1 },
+      { country: "Peru", active: 1 },
+      { country: "Qatar", active: 1 },
+      { country: "Romania", active: 1 },
+      { country: "Saudi Arabia", active: 1 },
+      { country: "South Africa", active: 1 },
+      { country: "Spain", active: 1 },
+      { country: "Ukraine", active: 1 },
+      { country: "Uzbekistan", active: 1 }
+    ]
+  };
+
+  // ช่วงวันที่ของข้อมูลแต่ละปี (จากคอลัมน์ 'ช่วงวันที่' ในไฟล์ Excel)
+  const DATA_PERIOD = {2566: "1 ม.ค.-31 ธ.ค.", 2567: "1 ม.ค.-31 ธ.ค.", 2568: "1 ม.ค.-31 ธ.ค.", 2569: "1 ม.ค.-31 ส.ค."};
+
+  const ALL_YEARS = [2566, 2567, 2568, 2569];
+  // ค่าเริ่มต้น: ปีล่าสุดที่มีข้อมูล
+  let selectedYear = ALL_YEARS[ALL_YEARS.length - 1];
+
+  let jvmMapInstance = null;
+  let barChartInstance = null;
+
+  function fmtNumber(n) {
+    if (n === null || n === undefined || isNaN(n)) return '-';
+    return Number(n).toLocaleString('th-TH');
+  }
+
+  function getCountryDisplayName(countryKey) {
+    if (countryKey === '(not set)') return 'ไม่ระบุตำแหน่ง (not set)';
+    const info = COUNTRY_META[countryKey];
+    return info ? `${info.th} (${countryKey})` : countryKey;
+  }
+
+  function getRecordsForSelectedYear() {
+    return YEARLY_COUNTRY_DATA[selectedYear] || [];
+  }
+
+  function getTotalPageviews() {
+    return SYSTEM_PAGEVIEWS[selectedYear] || 0;
+  }
+
+  function populateFilters() {
+    const yearSelect = document.getElementById('yearSelect');
+    yearSelect.innerHTML = '';
+    ALL_YEARS.slice().reverse().forEach(yr => {
+      const opt = document.createElement('option');
+      opt.value = yr;
+      opt.textContent = yr;
+      yearSelect.appendChild(opt);
+    });
+    yearSelect.value = selectedYear;
+
+    yearSelect.addEventListener('change', (e) => {
+      selectedYear = Number(e.target.value);
+      renderAll(true);
+    });
+
+  }
+
+  function renderKPIs() {
+    const records = getRecordsForSelectedYear();
+    const known = records.filter(r => r.country !== '(not set)');
+
+    // ใช้ตัวเลข 'จำนวนผู้เข้าชม' จากตารางด้านบนของไฟล์ Excel โดยตรง
+    const activeVal = getTotalPageviews();
+    document.getElementById('kpiCountries').textContent = fmtNumber(known.length);
+
+    document.getElementById('kpiActiveUsers').textContent = fmtNumber(activeVal);
+    document.getElementById('kpiPeriod').textContent = DATA_PERIOD[selectedYear];
+  }
+
+  function getMetabaseBracket(val) {
+    if (!val || val <= 0) return null;
+    if (val <= 10) return 'b1';
+    if (val <= 50) return 'b2';
+    if (val <= 200) return 'b3';
+    if (val <= 1000) return 'b4';
+    return 'b5';
+  }
+
+  function renderRegionMap() {
+    const yearLabel = `ปี ${selectedYear}`;
+    document.getElementById('mapYearSubtitle').textContent = `Region map: การกระจายตัวตามภูมิภาคทั่วโลก (${yearLabel})`;
+
+    const records = getRecordsForSelectedYear();
+    let notSetUsers = 0;
+    const isoDataMap = {};
+    const regionSeriesValues = {};
+
+    records.forEach(r => {
+      if (r.country === '(not set)') {
+        notSetUsers = r.active;
+        return;
+      }
+      const meta = COUNTRY_META[r.country];
+      if (meta && meta.iso) {
+        isoDataMap[meta.iso] = r;
+        const bracket = getMetabaseBracket(r.active);
+        if (bracket) {
+          regionSeriesValues[meta.iso] = bracket;
+        }
+      }
+    });
+
+    document.getElementById('notSetBadge').textContent = `ไม่ระบุประเทศ (not set): ${fmtNumber(notSetUsers)} คน`;
+
+    if (jvmMapInstance) {
+      try {
+        jvmMapInstance.destroy();
+      } catch (e) {}
+      jvmMapInstance = null;
+    }
+
+    const mapContainer = document.getElementById('jvm-map');
+    mapContainer.innerHTML = '';
+
+    if (window.jsVectorMap) {
+      jvmMapInstance = new jsVectorMap({
+        selector: '#jvm-map',
+        map: 'world',
+        backgroundColor: 'transparent',
+        draggable: true,
+        zoomButtons: false,
+        zoomOnScroll: true,
+        zoomMin: 1,
+        zoomMax: 12,
+        zoomStep: 1.4,
+        regionsSelectable: false,
+        series: {
+          regions: [{
+            attribute: 'fill',
+            scale: {
+              'b1': '#BCE7F0',
+              'b2': '#75C9DC',
+              'b3': '#2AA7C6',
+              'b4': '#157992',
+              'b5': '#0A4E5F'
+            },
+            values: regionSeriesValues
+          }]
+        },
+        regionStyle: {
+          initial: {
+            fill: '#ECEFF3',
+            fillOpacity: 1,
+            stroke: '#FFFFFF',
+            strokeWidth: 0.75,
+            strokeOpacity: 1
+          },
+          hover: {
+            fillOpacity: 0.85,
+            cursor: 'default'
+          }
+        },
+        onRegionTooltipShow(event, tooltip, code) {
+          const countryKey = ISO_TO_COUNTRY[code];
+          const info = isoDataMap[code];
+          
+          let html = '';
+          if (info && countryKey) {
+            const meta = COUNTRY_META[countryKey];
+            html = `
+              <div style="font-weight:700; font-size:12.5px; margin-bottom:4px; color:#FFFFFF;">
+                ${meta ? meta.th : countryKey} (${countryKey})
+              </div>
+              <div style="font-size:11px; color:#CFD7DF; margin:2px 0;">ผู้ใช้งานที่ใช้งาน: <b style="color:#FFF;">${fmtNumber(info.active)}</b> คน</div>
+            `;
+          } else {
+            const cName = ISO_TO_COUNTRY[code] || code;
+            html = `
+              <div style="font-weight:600; font-size:12px; color:#FFFFFF;">${cName}</div>
+              <div style="font-size:11px; color:#94A3B8; margin-top:2px;">ไม่มีข้อมูลผู้ใช้งาน (${yearLabel})</div>
+            `;
+          }
+          tooltip.text(html, true);
+        }
+      });
+
+      // ปรับแต่ง SVG Viewport เพื่อให้แผนที่รักษาอัตราส่วนและ Auto-scale พอดีจอเสมอ
+      setTimeout(() => {
+        const svg = mapContainer.querySelector('svg');
+        if (svg) {
+          svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        }
+        if (jvmMapInstance && typeof jvmMapInstance.updateSize === 'function') {
+          jvmMapInstance.updateSize();
+        }
+      }, 50);
+    }
+  }
+
+  // ติดตั้ง ResizeObserver เพื่อตรวจจับการเปลี่ยนขนาดกล่อง/หน้าจอแบบเรียลไทม์ (Auto-scale)
+  let resizeTimer = null;
+  function setupResponsiveMapObserver() {
+    const mapWrapper = document.querySelector('.region-map-wrapper');
+    if (!mapWrapper) return;
+
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          if (jvmMapInstance && typeof jvmMapInstance.updateSize === 'function') {
+            jvmMapInstance.updateSize();
+            const svg = document.querySelector('#jvm-map svg');
+            if (svg) {
+              svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            }
+          }
+        }, 100);
+      });
+      ro.observe(mapWrapper);
+    } else {
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          if (jvmMapInstance && typeof jvmMapInstance.updateSize === 'function') {
+            jvmMapInstance.updateSize();
+          }
+        }, 150);
+      });
+    }
+  }
+
+  function renderTopChart() {
+    const yearLabel = `ประจำปี ${selectedYear}`;
+    const barSubtitle = document.getElementById('barYearSubtitle');
+    barSubtitle.textContent = `เรียงลำดับจำนวนผู้ใช้งานที่ใช้งาน ${yearLabel}`;
+
+    const records = getRecordsForSelectedYear();
+    
+    const top5 = records
+      .filter(r => r.country !== '(not set)')
+      .sort((a, b) => b.active - a.active)
+      .slice(0, 5);
+
+    const labels = top5.map(d => {
+      const meta = COUNTRY_META[d.country];
+      return meta ? `${meta.th} (${d.country})` : d.country;
+    });
+
+    const activeData = top5.map(d => d.active);
+
+    const bgColors = top5.map(() => '#1FA8C9');
+
+    const ctx = document.getElementById('topCountriesChart').getContext('2d');
+    if (barChartInstance) {
+      barChartInstance.destroy();
+    }
+
+    barChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'ผู้ใช้งานที่ใช้งาน',
+          data: activeData,
+          backgroundColor: bgColors,
+          borderRadius: 4,
+          maxBarThickness: 24
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            grid: { color: '#EDEFF2' },
+            ticks: {
+              color: '#5C6773',
+              font: { family: "'IBM Plex Sans Thai', sans-serif", size: 11 },
+              callback: (val) => fmtNumber(val)
+            }
+          },
+          y: {
+            grid: { display: false },
+            ticks: {
+              color: '#1A1F25',
+              font: { family: "'IBM Plex Sans Thai', sans-serif", size: 12, weight: '500' }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1A1F25',
+            titleFont: { family: "'IBM Plex Sans Thai', sans-serif", size: 12.5, weight: 'bold' },
+            bodyFont: { family: "'IBM Plex Sans Thai', sans-serif", size: 12 },
+            padding: 10,
+            cornerRadius: 4,
+            callbacks: {
+              label: (context) => {
+                const idx = context.dataIndex;
+                const active = top5[idx].active;
+                return `ผู้ใช้งานที่ใช้งาน: ${fmtNumber(active)} คน`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // ตารางแบบ Metabase: แสดงทุกแถว เลื่อน (scroll) ดูภายในตาราง
+  function renderCountryTable() {
+    const records = getRecordsForSelectedYear()
+      .slice()
+      .sort((a, b) => b.active - a.active);
+
+    const body = document.getElementById('countryTableBody');
+    body.innerHTML = '';
+    records.forEach((r, i) => {
+      const tr = document.createElement('tr');
+      const tdRank = document.createElement('td');
+      tdRank.className = 'col-rank';
+      tdRank.textContent = i + 1;
+      const tdName = document.createElement('td');
+      tdName.textContent = r.country;
+      const tdNum = document.createElement('td');
+      tdNum.className = 'col-num';
+      tdNum.textContent = fmtNumber(r.active);
+      tr.append(tdRank, tdName, tdNum);
+      body.appendChild(tr);
+    });
+
+    document.querySelector('.mb-table-wrap').scrollTop = 0;
+    document.getElementById('tableRowCount').textContent = `Showing ${records.length} rows`;
+  }
+
+  function renderAll(updateMap = true) {
+    renderKPIs();
+    if (updateMap) {
+      renderRegionMap();
+    }
+    renderTopChart();
+    renderCountryTable();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    populateFilters();
+    renderAll(true);
+    setupResponsiveMapObserver();
+  });
+</script>
+</body>
+</html>
