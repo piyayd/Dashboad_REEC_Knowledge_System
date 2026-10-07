@@ -1,0 +1,6 @@
+.git
+.gitattributes
+.assetsignore
+LICENSE
+wrangler.jsonc
+public
