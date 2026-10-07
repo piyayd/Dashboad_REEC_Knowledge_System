@@ -855,7 +855,7 @@
     document.getElementById('kpiCountries').textContent = fmtNumber(known.length);
 
     document.getElementById('kpiActiveUsers').textContent = fmtNumber(activeVal);
-    document.getElementById('kpiPeriod').textContent = `${DATA_PERIOD[selectedYear]} ${selectedYear}`;
+    document.getElementById('kpiPeriod').textContent = DATA_PERIOD[selectedYear];
   }
 
   function getMetabaseBracket(val) {
